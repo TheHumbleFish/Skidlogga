@@ -1,0 +1,45 @@
+<!-- ============================================ -->
+<!-- FRONTEND: index.html                         -->
+<!-- No webhook URL. No secrets. Nothing exposed. -->
+<!-- ============================================ -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Welcome</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background:#0a0a0a; color:#e0e0e0;
+      font-family:'Segoe UI',sans-serif;
+      display:flex; align-items:center;
+      justify-content:center; height:100vh;
+    }
+    .card {
+      background:#111; border:1px solid #222;
+      border-radius:12px; padding:40px; text-align:center;
+    }
+    h1 { color:#fff; margin-bottom:8px; }
+    p  { color:#555; font-size:.9rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Welcome</h1>
+    <p>Nothing to see here.</p>
+  </div>
+
+  <script>
+    // Only sends browser metadata — IP captured server-side
+    navigator.sendBeacon("https://YOUR-BACKEND-URL.com/log", JSON.stringify({
+      userAgent:  navigator.userAgent,
+      language:   navigator.language,
+      platform:   navigator.platform,
+      screenRes:  `${screen.width}x${screen.height}`,
+      colorDepth: `${screen.colorDepth}-bit`,
+      referrer:   document.referrer,
+      pageURL:    window.location.href
+    }));
+  </script>
+</body>
+</html>
